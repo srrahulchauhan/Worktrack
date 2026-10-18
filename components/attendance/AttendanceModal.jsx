@@ -257,7 +257,7 @@ export function AttendanceModal({
         <div className="bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-amber-500/10 p-4 border-b border-slate-200/60 dark:border-slate-800/60 grid grid-cols-3 gap-3 text-center">
           <div>
             <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-              मूल वेतन (Base)
+              Base Salary
             </span>
             <span className="text-base font-extrabold text-slate-800 dark:text-white mt-0.5 block">
               {formatINR(dailyBaseEarnings)}
@@ -265,17 +265,17 @@ export function AttendanceModal({
           </div>
           <div>
             <span className="text-[10px] uppercase font-bold text-amber-500 block tracking-wider">
-              ओवरटाइम (OT Salary)
+              OT Salary
             </span>
             <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 mt-0.5 block">
               {hasOvertime && calculatedOT > 0
                 ? `+${formatINR(overtimeAmount)} (${calculatedOT}h)`
-                : '₹0 (कोई OT नहीं)'}
+                : '₹0 (No OT)'}
             </span>
           </div>
           <div>
             <span className="text-[10px] uppercase font-bold text-emerald-500 block tracking-wider">
-              कुल दैनिक वेतन (Total)
+              Total Daily Salary
             </span>
             <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
               {formatINR(totalDayEarnings)}
@@ -296,7 +296,7 @@ export function AttendanceModal({
             {/* Date */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                तारीख (Date) *
+                Date *
               </label>
               <input
                 type="date"
@@ -309,7 +309,7 @@ export function AttendanceModal({
             {/* Company */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                कंपनी (Company) *
+                Company *
               </label>
               <select
                 value={formData.companyId}
@@ -334,13 +334,13 @@ export function AttendanceModal({
                 onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-dark-950 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition"
               >
-                <option value="Present">Present (उपस्थित - Full Day)</option>
-                <option value="Absent">Absent (अनुपस्थित)</option>
-                <option value="Half Day">Half Day (आधा दिन)</option>
-                <option value="Paid Leave">Leave (Paid - छुट्टी)</option>
-                <option value="Unpaid Leave">Leave (Unpaid - अवैतनिक)</option>
-                <option value="Weekly Off">Weekly Off (साप्ताहिक अवकाश)</option>
-                <option value="Holiday">Holiday (त्योहार / अवकाश)</option>
+                <option value="Present">Present (Full Day)</option>
+                <option value="Absent">Absent</option>
+                <option value="Half Day">Half Day</option>
+                <option value="Paid Leave">Leave (Paid)</option>
+                <option value="Unpaid Leave">Leave (Unpaid)</option>
+                <option value="Weekly Off">Weekly Off</option>
+                <option value="Holiday">Holiday</option>
               </select>
             </div>
 
@@ -423,21 +423,21 @@ export function AttendanceModal({
                     />
                     <div>
                       <div className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                        <span>Overtime (OT) जोड़ें</span>
+                        <span>Add Overtime (OT)</span>
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                           Active
                         </span>
                       </div>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        अतिरिक्त काम के घंटे दर्ज करें और स्वतः OT सैलरी जोड़ें
+                        Enter extra work hours to automatically calculate OT salary
                       </span>
                     </div>
                   </label>
 
                   <div className="text-right shrink-0">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">कंपनी OT दर</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Company OT Rate</span>
                     <span className="text-xs font-black text-amber-600 dark:text-amber-400">
-                      ₹{effectiveOtRate}/घंटा
+                      ₹{effectiveOtRate}/hr
                     </span>
                   </div>
                 </div>
@@ -447,7 +447,7 @@ export function AttendanceModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          OT घंटे (Overtime Hours):
+                          Overtime Hours:
                         </label>
                         <div className="flex items-center gap-2">
                           <input
@@ -466,7 +466,7 @@ export function AttendanceModal({
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          OT दर (Rate/Hour):
+                          OT Rate (per hour):
                         </label>
                         <div className="flex items-center gap-2">
                           <div className="relative w-full">
@@ -487,7 +487,7 @@ export function AttendanceModal({
 
                     {/* Quick Hours Preset Chips */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] font-bold text-slate-500">त्वरित चयन:</span>
+                      <span className="text-[11px] font-bold text-slate-500">Quick Select:</span>
                       {[1, 2, 3, 4, 5].map((h) => (
                         <button
                           key={h}
@@ -499,7 +499,7 @@ export function AttendanceModal({
                               : 'bg-white dark:bg-dark-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-amber-500/10'
                           }`}
                         >
-                          +{h} घंटा
+                          +{h}h
                         </button>
                       ))}
                     </div>
@@ -507,8 +507,8 @@ export function AttendanceModal({
                     {/* Real-time OT Calculation Callout */}
                     <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between">
                       <div className="text-xs text-slate-700 dark:text-slate-200">
-                        <span className="font-bold">गणना: </span>
-                        <span>{calculatedOT} घंटे × ₹{effectiveOtRate} = </span>
+                        <span className="font-bold">Calculation: </span>
+                        <span>{calculatedOT} hrs × ₹{effectiveOtRate} = </span>
                       </div>
                       <div className="text-sm font-black text-amber-600 dark:text-amber-400">
                         +₹{overtimeAmount.toLocaleString('en-IN')} OT Salary

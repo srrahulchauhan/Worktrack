@@ -34,12 +34,12 @@ export function WorkTrackSidebar({
   setIsCollapsed,
   onBackToStudy,
 }) {
-  const { activeCompany, companies } = useWorkTrack();
+  const { activeCompany, companies, syncConfig } = useWorkTrack();
   const navigate = useNavigate();
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-white dark:bg-dark-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 z-30 select-none ${
+      className={`hidden lg:flex flex-col bg-white/90 dark:bg-dark-900/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-white/10 transition-all duration-300 z-30 select-none shadow-xs ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -121,12 +121,36 @@ export function WorkTrackSidebar({
                     }`}
                   />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
+                  {isActive && !isCollapsed && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
+                  )}
                 </>
               )}
             </NavLink>
           );
         })}
       </div>
+
+      {/* Cloud & Excel Status Indicator */}
+      {!isCollapsed && (
+        <div className="px-3 pb-1">
+          <div className="p-2.5 rounded-2xl bg-gradient-to-r from-blue-50/80 to-emerald-50/80 dark:from-blue-950/30 dark:to-emerald-950/30 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  syncConfig?.isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                }`}
+              />
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {syncConfig?.isConnected ? 'Google Sheets' : 'Local Ready'}
+              </span>
+            </div>
+            <span className="font-black text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md">
+              .XLSX
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Return to Personal OS Hub */}
       <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">

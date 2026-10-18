@@ -15,6 +15,13 @@ import {
   Calendar,
   CreditCard,
   ArrowUpRight,
+  FileSpreadsheet,
+  Cloud,
+  Download,
+  Save,
+  ExternalLink,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import {
   BarChart,
@@ -47,12 +54,18 @@ export function WorkTrackDashboard() {
     attendance,
     overtime,
     payments,
+    downloadExcel,
+    syncNow,
+    syncConfig,
+    manualSaveData,
+    downloadBackupJSON,
   } = useWorkTrack();
 
   const {
     onOpenAddCompany,
     onOpenMarkAttendance,
     onOpenAddOvertime,
+    onOpenSaveSync,
   } = useOutletContext() || {};
 
   const navigate = useNavigate();
@@ -180,50 +193,59 @@ export function WorkTrackDashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-      {/* Top Welcome & Quick Actions Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Welcome Command Center */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-2xl border border-white/10">
+        {/* Subtle decorative glow orbs */}
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-10 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-blue-300 text-xs font-bold uppercase tracking-wider">
-            <Briefcase size={14} />
-            <span>Personal WorkTrack Hub</span>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-blue-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-xs">
+                <Sparkles size={13} className="text-cyan-400" />
+                <span>Career & Attendance Hub</span>
+              </span>
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-slate-300 border border-white/10">
+                {dayjs().format('MMMM YYYY')}
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mt-3 tracking-tight">
+              Welcome to My WorkTrack
+            </h2>
+            <p className="text-slate-300 text-xs sm:text-sm mt-1.5 max-w-2xl leading-relaxed">
+              Track attendance, shifts, daily wage breakdown, overtime hours, and salary disbursements for{' '}
+              <span className="text-white font-extrabold underline decoration-cyan-400 decoration-2">
+                {currentCompanyName}
+              </span>.
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black mt-1 tracking-tight">
-            Welcome to My WorkTrack
-          </h2>
-          <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-xl leading-relaxed">
-            Managing company history, daily attendance, shifts, salary calculations, and overtime earnings for{' '}
-            <span className="text-white font-bold underline decoration-blue-400">
-              {currentCompanyName}
-            </span>.
-          </p>
-        </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 relative z-10 shrink-0">
-          <button
-            onClick={onOpenMarkAttendance}
-            className="flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition active:scale-95"
-          >
-            <CalendarCheck size={16} />
-            <span>Mark Attendance</span>
-          </button>
-          <button
-            onClick={onOpenAddOvertime}
-            className="flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 transition active:scale-95"
-          >
-            <Clock size={16} />
-            <span>Add Overtime</span>
-          </button>
-          <button
-            onClick={onOpenAddCompany}
-            className="flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition active:scale-95"
-          >
-            <Building2 size={16} />
-            <span>Add Company</span>
-          </button>
+          {/* Quick Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={onOpenMarkAttendance}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition active:scale-95"
+            >
+              <CalendarCheck size={16} />
+              <span>Mark Attendance</span>
+            </button>
+            <button
+              onClick={onOpenAddOvertime}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/25 transition active:scale-95"
+            >
+              <Clock size={16} />
+              <span>Add Overtime</span>
+            </button>
+            <button
+              onClick={onOpenAddCompany}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
+            >
+              <Building2 size={16} />
+              <span>Add Company</span>
+            </button>
+          </div>
         </div>
       </div>
 

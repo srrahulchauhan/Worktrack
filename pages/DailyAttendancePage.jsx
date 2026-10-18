@@ -10,6 +10,7 @@ import {
   Clock,
   TrendingUp,
   Download,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useWorkTrack } from '../context/WorkTrackContext';
 import { AttendanceCalendar } from '../components/attendance/AttendanceCalendar';
@@ -26,6 +27,7 @@ export function DailyAttendancePage() {
     activeCompanyId,
     setActiveCompanyId,
     deleteAttendance,
+    downloadExcel,
   } = useWorkTrack();
 
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'table'
@@ -126,6 +128,16 @@ export function DailyAttendancePage() {
             </button>
           </div>
 
+          {/* Export Excel Button */}
+          <button
+            onClick={downloadExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 shadow-xs active:scale-95"
+            title="Download full Attendance and Salary data in Excel (.xlsx)"
+          >
+            <FileSpreadsheet size={16} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden sm:inline">Export Excel</span>
+          </button>
+
           {/* Mark Attendance Button */}
           <button
             onClick={() => {
@@ -190,7 +202,7 @@ export function DailyAttendancePage() {
 
         <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/40">
           <span className="text-[10px] uppercase font-bold text-sky-700 dark:text-sky-300 tracking-wider block">
-            मूल वेतन (Base)
+            Base Salary
           </span>
           <span className="text-lg font-black text-sky-800 dark:text-sky-200 mt-0.5 block truncate">
             {formatINR(totalBaseSalary)}
@@ -199,7 +211,7 @@ export function DailyAttendancePage() {
 
         <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/40">
           <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-300 tracking-wider block">
-            ओवरटाइम (OT Salary)
+            OT Salary
           </span>
           <span className="text-lg font-black text-amber-800 dark:text-amber-200 mt-0.5 block truncate">
             +{formatINR(totalOtSalary)}
@@ -208,7 +220,7 @@ export function DailyAttendancePage() {
 
         <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40 col-span-2 sm:col-span-1">
           <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 tracking-wider block">
-            कुल वेतन (Total)
+            Total Salary
           </span>
           <span className="text-lg font-black text-emerald-800 dark:text-emerald-200 mt-0.5 block truncate">
             {formatINR(totalDailyEarnings)}

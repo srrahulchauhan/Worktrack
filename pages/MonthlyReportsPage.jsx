@@ -4,6 +4,7 @@ import {
   Calendar,
   Building2,
   Download,
+  FileSpreadsheet,
   Printer,
   CheckCircle2,
   XCircle,
@@ -37,6 +38,7 @@ export function MonthlyReportsPage() {
     activeCompanyId,
     setActiveCompanyId,
     payments,
+    downloadExcel,
   } = useWorkTrack();
 
   const [selectedMonth, setSelectedMonth] = useState(() => dayjs().format('YYYY-MM'));
@@ -181,6 +183,14 @@ export function MonthlyReportsPage() {
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={downloadExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 shadow-xs active:scale-95"
+            title="Download complete Monthly Report in Excel (.xlsx)"
+          >
+            <FileSpreadsheet size={15} className="text-emerald-600 dark:text-emerald-400" />
+            <span>Export Excel (.xlsx)</span>
+          </button>
+          <button
             onClick={handlePrint}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition shadow-xs"
           >
@@ -192,7 +202,7 @@ export function MonthlyReportsPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition active:scale-95"
           >
             <Download size={15} />
-            <span>Export Full CSV</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -313,7 +323,7 @@ export function MonthlyReportsPage() {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               <h3 className="text-base font-black tracking-tight text-white">
-                Monthly Salary Summary • मासिक वेतन विवरण
+                Monthly Salary Summary
               </h3>
             </div>
             <p className="text-xs text-slate-300 mt-0.5">
@@ -328,7 +338,7 @@ export function MonthlyReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
           <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-              1. Basic Salary (मूल वेतन)
+              1. Basic Salary
             </span>
             <div className="text-2xl font-black text-white mt-1">
               {formatINR(baseEarnings)}
@@ -340,19 +350,19 @@ export function MonthlyReportsPage() {
 
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 block">
-              2. Overtime Salary (ओवरटाइम सैलरी)
+              2. Overtime Salary
             </span>
             <div className="text-2xl font-black text-amber-300 mt-1">
               +{formatINR(overtimeEarnings)}
             </div>
             <span className="text-xs text-amber-400/90 block mt-0.5 font-medium">
-              {totalOvertimeHours} घंटे कुल OT @ ₹{company?.overtimeRate || 200}/hr
+              {totalOvertimeHours} hrs total OT @ ₹{company?.overtimeRate || 200}/hr
             </span>
           </div>
 
           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 block">
-              3. Total Salary (कुल देय वेतन)
+              3. Total Salary
             </span>
             <div className="text-2xl font-black text-emerald-300 mt-1">
               {formatINR(totalExpectedEarnings)}

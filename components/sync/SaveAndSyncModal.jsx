@@ -68,11 +68,39 @@ export function SaveAndSyncModal({ isOpen, onClose }) {
     }
   };
 
-  const sampleAppsScriptCode = `// Google Apps Script Web App for My WorkTrack
-// 1. Open https://script.google.com -> New project
-// 2. Paste code from worktrack-google-sheets-appscript.gs
-// 3. Deploy as Web App (Execute as: "Me", Access: "Anyone")
-// 4. Copy Web App URL into the Connect form above!`;
+  const sampleAppsScriptCode = `function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "WorkTrack Web App Active" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData ? e.postData.contents : "{}");
+    if (payload.action === "ping") {
+      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Connected!" })).setMimeType(ContentService.MimeType.JSON);
+    }
+    var ss = payload.spreadsheetId ? SpreadsheetApp.openById(payload.spreadsheetId) : SpreadsheetApp.getActiveSpreadsheet();
+    var data = payload.data || {};
+    syncSheet(ss, "Companies", data.companies || [], ["ID", "Name", "Role", "Department", "Location", "Status", "JoiningDate", "LeavingDate", "Salary", "Days", "Hours", "DailyRate", "OTRate", "PaymentDay"]);
+    syncSheet(ss, "Attendance", data.attendance || [], ["ID", "Date", "Company", "DayOfWeek", "Status", "PlannedShift", "ActualShift", "CheckIn", "CheckOut", "Break", "Hours", "OTHours", "DailySalary", "OTEarnings", "TotalEarnings", "Notes"]);
+    syncSheet(ss, "Overtime", data.overtime || [], ["ID", "Date", "Company", "Hours", "OTHours", "OTRate", "Multiplier", "OTAmount", "Notes"]);
+    syncSheet(ss, "Payments", data.payments || [], ["ID", "Month", "Company", "Expected", "Received", "Due", "Status", "TxID", "Date", "Notes"]);
+    return ContentService.createTextOutput(JSON.stringify({ success: true, spreadsheetUrl: ss.getUrl(), spreadsheetName: ss.getName() })).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function syncSheet(ss, name, items, headers) {
+  var s = ss.getSheetByName(name) || ss.insertSheet(name);
+  s.clear();
+  var rows = [headers];
+  items.forEach(function(item) { rows.push(Object.values(item)); });
+  if (rows.length > 0 && rows[0].length > 0) {
+    s.getRange(1, 1, rows.length, headers.length).setValues(rows);
+    s.getRange(1, 1, 1, headers.length).setBackground("#1d4ed8").setFontColor("#ffffff").setFontWeight("bold");
+    s.setFrozenRows(1);
+  }
+}`;
 
   const copyScriptToClipboard = () => {
     navigator.clipboard.writeText(sampleAppsScriptCode);
@@ -156,33 +184,54 @@ export function SaveAndSyncModal({ isOpen, onClose }) {
         {activeTab === 'overview' && (
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Quick Action Save Buttons Grid */}
+            {/* Quick Action Save & Export Hub */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                Save & Export Options
-              </h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Save, Excel Export & Backup
+                </h4>
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/40">
+                  Full Multi-Sheet .xlsx & Live Sheets Sync
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
-                  onClick={manualSaveData}
-                  className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 font-bold text-xs hover:bg-blue-100 transition shadow-xs"
+                  onClick={downloadExcel}
+                  className="flex flex-col items-center justify-center text-center p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-800/60 font-bold transition shadow-xs group"
                 >
-                  <Save size={16} />
-                  <span>Save Data</span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-1.5 shadow-sm group-hover:scale-110 transition-transform">
+                    <FileSpreadsheet size={16} />
+                  </div>
+                  <span className="text-xs font-black">Download Excel (.xlsx)</span>
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    All 7 Sheets Formatted
+                  </span>
                 </button>
 
                 <button
-                  onClick={downloadExcel}
-                  className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 font-bold text-xs hover:bg-emerald-100 transition shadow-xs"
+                  onClick={manualSaveData}
+                  className="flex flex-col items-center justify-center text-center p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 border border-blue-200/80 dark:border-blue-800/60 font-bold transition shadow-xs group"
                 >
-                  <FileSpreadsheet size={16} />
-                  <span>Download Excel (.xlsx)</span>
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center mb-1.5 shadow-sm group-hover:scale-110 transition-transform">
+                    <Save size={16} />
+                  </div>
+                  <span className="text-xs font-black">Quick Save Local</span>
+                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mt-0.5">
+                    LocalStorage Snapshot
+                  </span>
                 </button>
 
                 <button
                   onClick={downloadBackupJSON}
-                  className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs hover:bg-slate-200 transition shadow-xs"
+                  className="flex flex-col items-center justify-center text-center p-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold transition shadow-xs group"
                 >
-                  <Download size={16} />
-                  <span>Download Backup (JSON)</span>
+                  <div className="w-8 h-8 rounded-xl bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center mb-1.5 shadow-sm group-hover:scale-110 transition-transform">
+                    <Download size={16} />
+                  </div>
+                  <span className="text-xs font-black">Export JSON Backup</span>
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                    Portable JSON File
+                  </span>
                 </button>
               </div>
             </div>
@@ -517,12 +566,20 @@ export function SaveAndSyncModal({ isOpen, onClose }) {
                   Script Location in your workspace:
                 </span>
                 <span className="text-xs font-mono text-blue-600 font-bold">
-                  worktrack-google-sheets-appscript.gs
+                  worktrack-google-sheets-appscript.js
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
-                A ready-to-use Google Apps Script file has already been saved into your project root directory. You can view or copy it directly into your Google project.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                A ready-to-use Google Apps Script file has already been saved into your project root directory. You can also copy it directly using the button below:
               </p>
+              <button
+                type="button"
+                onClick={copyScriptToClipboard}
+                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm active:scale-95"
+              >
+                {copiedScript ? <Check size={14} className="text-emerald-300" /> : <Copy size={14} />}
+                <span>{copiedScript ? 'Code Copied to Clipboard!' : 'Copy Google Apps Script Code'}</span>
+              </button>
             </div>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
