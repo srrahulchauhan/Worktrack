@@ -64,23 +64,45 @@ export function AttendanceModal({
       });
     } else {
       const defaultCompany = initialCompanyId || activeCompany?.id || (companies[0]?.id ?? '');
-      setHasOvertime(false);
-      setCustomOtRate('');
-      setFormData({
-        date: initialDate || dayjs().format('YYYY-MM-DD'),
-        companyId: defaultCompany,
-        status: 'Present',
-        plannedShift: 'Day Shift',
-        actualShift: 'Day Shift',
-        checkIn: '09:00',
-        checkOut: '18:00',
-        breakDuration: '60',
-        overtimeHours: '',
-        notes: '',
-      });
+      const dateToUse = initialDate || dayjs().format('YYYY-MM-DD');
+      const existing = attendance.find(
+        (a) => a.date === dateToUse && a.companyId === defaultCompany
+      );
+      if (existing) {
+        const otHoursVal = Number(existing.overtimeHours) || 0;
+        setHasOvertime(otHoursVal > 0 || !!existing.hasOvertime);
+        setCustomOtRate(existing.overtimeRate !== undefined ? String(existing.overtimeRate) : '');
+        setFormData({
+          date: existing.date,
+          companyId: existing.companyId,
+          status: existing.status,
+          plannedShift: existing.plannedShift || 'Day Shift',
+          actualShift: existing.actualShift || 'Day Shift',
+          checkIn: existing.checkIn || '',
+          checkOut: existing.checkOut || '',
+          breakDuration: existing.breakDuration?.toString() || '0',
+          overtimeHours: otHoursVal > 0 ? String(otHoursVal) : '',
+          notes: existing.notes || '',
+        });
+      } else {
+        setHasOvertime(false);
+        setCustomOtRate('');
+        setFormData({
+          date: dateToUse,
+          companyId: defaultCompany,
+          status: 'Present',
+          plannedShift: 'Day Shift',
+          actualShift: 'Day Shift',
+          checkIn: '09:00',
+          checkOut: '18:00',
+          breakDuration: '60',
+          overtimeHours: '',
+          notes: '',
+        });
+      }
     }
     setError('');
-  }, [recordToEdit, initialDate, initialCompanyId, isOpen, activeCompany, companies]);
+  }, [recordToEdit, initialDate, initialCompanyId, isOpen, activeCompany, companies, attendance]);
 
   // Adjust timings when shift changes
   const handleShiftChange = (shiftType, isPlanned = false) => {
@@ -147,6 +169,56 @@ export function AttendanceModal({
         checkOut: prev.checkOut || '18:00',
         breakDuration: prev.breakDuration || '60',
       }));
+    }
+  };
+
+  const handleDateChange = (newDate) => {
+    const existing = attendance.find(
+      (a) => a.date === newDate && a.companyId === formData.companyId
+    );
+    if (existing) {
+      const otHoursVal = Number(existing.overtimeHours) || 0;
+      setHasOvertime(otHoursVal > 0 || !!existing.hasOvertime);
+      setCustomOtRate(existing.overtimeRate !== undefined ? String(existing.overtimeRate) : '');
+      setFormData({
+        date: newDate,
+        companyId: existing.companyId,
+        status: existing.status,
+        plannedShift: existing.plannedShift || 'Day Shift',
+        actualShift: existing.actualShift || 'Day Shift',
+        checkIn: existing.checkIn || '',
+        checkOut: existing.checkOut || '',
+        breakDuration: existing.breakDuration?.toString() || '0',
+        overtimeHours: otHoursVal > 0 ? String(otHoursVal) : '',
+        notes: existing.notes || '',
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, date: newDate }));
+    }
+  };
+
+  const handleCompanyChange = (newCompanyId) => {
+    const existing = attendance.find(
+      (a) => a.date === formData.date && a.companyId === newCompanyId
+    );
+    if (existing) {
+      const otHoursVal = Number(existing.overtimeHours) || 0;
+      setHasOvertime(otHoursVal > 0 || !!existing.hasOvertime);
+      setCustomOtRate(existing.overtimeRate !== undefined ? String(existing.overtimeRate) : '');
+      setFormData({
+        date: formData.date,
+        companyId: newCompanyId,
+        status: existing.status,
+        plannedShift: existing.plannedShift || 'Day Shift',
+        actualShift: existing.actualShift || 'Day Shift',
+        checkIn: existing.checkIn || '',
+        checkOut: existing.checkOut || '',
+        breakDuration: existing.breakDuration?.toString() || '0',
+        overtimeHours: otHoursVal > 0 ? String(otHoursVal) : '',
+        notes: existing.notes || '',
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, companyId: newCompanyId }));
     }
   };
 
@@ -217,7 +289,14 @@ export function AttendanceModal({
       if (recordToEdit) {
         updateAttendance(recordToEdit.id, payload);
       } else {
-        addAttendance(payload);
+        const existing = attendance.find(
+          (a) => a.date === payload.date && a.companyId === payload.companyId
+        );
+        if (existing) {
+          updateAttendance(existing.id, payload);
+        } else {
+          addAttendance(payload);
+        }
       }
       onClose();
     } catch (err) {
@@ -301,7 +380,7 @@ export function AttendanceModal({
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-dark-950 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 outline-hidden transition"
               />
             </div>
@@ -313,12 +392,12 @@ export function AttendanceModal({
               </label>
               <select
                 value={formData.companyId}
-                onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
+                onChange={(e) => handleCompanyChange(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-dark-950 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 outline-hidden transition"
               >
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} {c.status === 'Current' ? '(Current)' : '(Left)'}
+                    {c.name} {c.status === 'Active' || c.status === 'Current' || !c.leavingDate ? '(Active)' : '(Left Company)'}
                   </option>
                 ))}
               </select>

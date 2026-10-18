@@ -77,8 +77,16 @@ export function DailyAttendancePage() {
   const totalDailyEarnings = totalBaseSalary + totalOtSalary;
 
   const handleDateClick = (dateStr) => {
-    setEditingRecord(null);
-    setTargetDateForNew(dateStr);
+    const existing = attendance.find(
+      (a) => a.date === dateStr && (!activeCompanyId || a.companyId === activeCompanyId)
+    );
+    if (existing) {
+      setEditingRecord(existing);
+      setTargetDateForNew(null);
+    } else {
+      setEditingRecord(null);
+      setTargetDateForNew(dateStr);
+    }
     setIsModalOpen(true);
   };
 

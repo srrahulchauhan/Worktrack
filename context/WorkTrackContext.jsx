@@ -493,7 +493,7 @@ export function WorkTrackProvider({ children }) {
         workingHours: totalWorkingHours,
         overtimeHours,
         overtimeRate: otRate,
-        overtimeMultiplier: multiplier,
+        overtimeMultiplier: Number(record.overtimeMultiplier) || 1,
         overtimeAmount: overtimeEarnings,
         notes: `Attendance: ${record.notes || record.actualShift || 'Overtime'}`,
         source: 'attendance',
