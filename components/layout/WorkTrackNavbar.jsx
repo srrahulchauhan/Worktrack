@@ -74,7 +74,7 @@ export function WorkTrackNavbar({
           >
             {companies.map((c) => (
               <option key={c.id} value={c.id} className="dark:bg-dark-900 text-slate-900 dark:text-white">
-                {c.name} {c.status === 'Current' ? '(Current)' : '(Left)'}
+                {c.name} {c.status === 'Active' || c.status === 'Current' || !c.leavingDate ? '(Active)' : '(Left Company)'}
               </option>
             ))}
           </select>

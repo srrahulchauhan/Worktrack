@@ -19,7 +19,7 @@ import { useWorkTrack } from '../../context/WorkTrackContext';
 
 export const WORKTRACK_NAV_ITEMS = [
   { path: '/worktrack/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/worktrack/companies', label: 'My Companies', icon: Building2 },
+  { path: '/worktrack/companies', label: 'Company Profiles', icon: Building2 },
   { path: '/worktrack/attendance', label: 'Daily Attendance', icon: CalendarCheck },
   { path: '/worktrack/shifts', label: 'Shift Management', icon: Clock },
   { path: '/worktrack/salary', label: 'Salary Calculator', icon: Calculator },

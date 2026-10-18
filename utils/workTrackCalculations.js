@@ -25,37 +25,132 @@ export function formatDate(dateStr, format = 'DD MMM YYYY') {
 }
 
 /**
- * Calculate employment duration between two dates
- * If leavingDate is empty, calculates up to today
+ * Calculate employment duration between two dates in years, months, and days
+ * If leavingDate is empty or null, calculates up to today (Present)
  */
 export function calculateEmploymentDuration(joiningDate, leavingDate) {
-  if (!joiningDate) return 'N/A';
+  if (!joiningDate) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      formatted: '—',
+      shortFormatted: '—',
+      range: '—',
+      totalMonths: 0,
+      isCurrent: !leavingDate,
+      isValid: false,
+    };
+  }
+
   const start = dayjs(joiningDate);
   const end = leavingDate ? dayjs(leavingDate) : dayjs();
 
-  if (!start.isValid()) return 'N/A';
-  if (end.isBefore(start)) return 'Invalid date range';
+  if (!start.isValid()) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      formatted: '—',
+      shortFormatted: '—',
+      range: '—',
+      totalMonths: 0,
+      isCurrent: !leavingDate,
+      isValid: false,
+    };
+  }
 
-  const totalMonths = end.diff(start, 'month');
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-  const days = end.diff(start.add(years, 'year').add(months, 'month'), 'day');
+  if (end.isBefore(start, 'day')) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      formatted: 'Invalid date range (leaving date cannot be earlier than joining date)',
+      shortFormatted: 'Invalid range',
+      range: `${start.format('DD MMM YYYY')} – Invalid`,
+      totalMonths: 0,
+      isCurrent: false,
+      isValid: false,
+      errorMessage: 'Leaving date cannot be earlier than joining date',
+    };
+  }
+
+  // Exact calendar difference in years, months, days
+  let years = end.year() - start.year();
+  let months = end.month() - start.month();
+  let days = end.date() - start.date();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonthDays = end.subtract(1, 'month').daysInMonth();
+    days += prevMonthDays;
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const totalMonths = years * 12 + months;
+
+  const parts = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? 'year' : 'years'}`);
+  if (months > 0) parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+  if (days > 0 || parts.length === 0) {
+    parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+  }
+
+  const shortParts = [];
+  if (years > 0) shortParts.push(`${years}y`);
+  if (months > 0) shortParts.push(`${months}m`);
+  if (days > 0 || shortParts.length === 0) shortParts.push(`${days}d`);
+
+  const durationStr = parts.join(', ');
+  const rangeStr = `${start.format('DD MMM YYYY')} – ${leavingDate ? dayjs(leavingDate).format('DD MMM YYYY') : 'Present'}`;
+
+  return {
+    years,
+    months,
+    days,
+    formatted: durationStr,
+    shortFormatted: shortParts.join(' '),
+    range: rangeStr,
+    totalMonths,
+    isCurrent: !leavingDate,
+    isValid: true,
+  };
+}
+
+/**
+ * Calculate total cumulative experience across multiple company records
+ */
+export function calculateTotalExperience(companies = []) {
+  let totalDays = 0;
+  companies.forEach((comp) => {
+    if (!comp.joiningDate) return;
+    const start = dayjs(comp.joiningDate);
+    const end = comp.leavingDate ? dayjs(comp.leavingDate) : dayjs();
+    if (start.isValid() && !end.isBefore(start)) {
+      totalDays += Math.max(0, end.diff(start, 'day'));
+    }
+  });
+
+  const years = Math.floor(totalDays / 365);
+  const remainingDays = totalDays % 365;
+  const months = Math.floor(remainingDays / 30);
+  const days = remainingDays % 30;
 
   const parts = [];
   if (years > 0) parts.push(`${years} ${years === 1 ? 'yr' : 'yrs'}`);
   if (months > 0) parts.push(`${months} ${months === 1 ? 'mo' : 'mos'}`);
-  if (parts.length === 0 || (years === 0 && months === 0)) {
-    parts.push(`${Math.max(1, days)} ${days === 1 ? 'day' : 'days'}`);
-  }
-
-  const durationStr = parts.join(' ');
-  const rangeStr = `${start.format('MMM YYYY')} – ${leavingDate ? dayjs(leavingDate).format('MMM YYYY') : 'Present'}`;
+  if (days > 0 || parts.length === 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
 
   return {
-    formatted: durationStr,
-    range: rangeStr,
-    totalMonths,
-    isCurrent: !leavingDate,
+    years,
+    months,
+    days,
+    totalDays,
+    formatted: parts.join(' '),
   };
 }
 

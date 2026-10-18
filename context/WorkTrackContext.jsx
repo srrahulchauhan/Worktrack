@@ -140,7 +140,7 @@ export function WorkTrackProvider({ children }) {
     if (!data.companies || data.companies.length === 0) return null;
     const found = data.companies.find((c) => c.id === data.activeCompanyId);
     if (found) return found;
-    const current = data.companies.find((c) => c.status === 'Current');
+    const current = data.companies.find((c) => c.status === 'Active' || c.status === 'Current');
     return current || data.companies[0] || null;
   }, [data.companies, data.activeCompanyId]);
 
