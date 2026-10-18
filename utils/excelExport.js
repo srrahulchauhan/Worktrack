@@ -2,9 +2,9 @@ import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
 
 /**
- * Export all WorkTrack data into a multi-sheet Excel Workbook (.xlsx)
+ * Build multi-sheet WorkTrack Excel workbook structure
  */
-export function exportWorkTrackExcel(data) {
+export function buildWorkTrackWorkbook(data) {
   const wb = XLSX.utils.book_new();
 
   // 1. Companies Sheet
@@ -14,7 +14,7 @@ export function exportWorkTrackExcel(data) {
     'Job Role': c.role,
     'Department': c.department || '',
     'Location': c.location || '',
-    'Employment Status': c.status,
+    'Employment Status': c.status || 'Active',
     'Joining Date': c.joiningDate,
     'Leaving Date': c.leavingDate || 'Present',
     'Monthly Salary (₹)': Number(c.monthlySalary) || 0,
@@ -88,7 +88,7 @@ export function exportWorkTrackExcel(data) {
     'Total Day Hours': Number(o.workingHours) || 0,
     'Overtime Hours': Number(o.overtimeHours) || 0,
     'Overtime Rate (₹/hr)': Number(o.overtimeRate) || 0,
-    'Rate Multiplier': Number(o.overtimeMultiplier) || 1.5,
+    'Rate Multiplier': Number(o.overtimeMultiplier) || 1,
     'Overtime Amount (₹)': Number(o.overtimeAmount) || 0,
     'Source': o.source || 'manual',
     'Notes': o.notes || '',
@@ -136,7 +136,23 @@ export function exportWorkTrackExcel(data) {
   const wsSettings = XLSX.utils.json_to_sheet(settingsData);
   XLSX.utils.book_append_sheet(wb, wsSettings, 'Settings');
 
-  // Trigger browser download
+  return wb;
+}
+
+/**
+ * Generate binary array buffer of the WorkTrack Excel workbook for live file saving
+ */
+export function generateWorkTrackExcelBuffer(data) {
+  const wb = buildWorkTrackWorkbook(data);
+  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return excelBuffer;
+}
+
+/**
+ * Export all WorkTrack data into a multi-sheet Excel Workbook (.xlsx) file download
+ */
+export function exportWorkTrackExcel(data) {
+  const wb = buildWorkTrackWorkbook(data);
   const filename = `My-WorkTrack-Export-${dayjs().format('YYYY-MM-DD')}.xlsx`;
   XLSX.writeFile(wb, filename);
 }

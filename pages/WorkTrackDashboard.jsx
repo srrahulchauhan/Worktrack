@@ -59,6 +59,9 @@ export function WorkTrackDashboard() {
     syncConfig,
     manualSaveData,
     downloadBackupJSON,
+    localFileName,
+    isLocalFileLinked,
+    isFileSystemSupported,
   } = useWorkTrack();
 
   const {
@@ -246,6 +249,78 @@ export function WorkTrackDashboard() {
               <span>Add Company</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Live Auto-Save to Google Sheets & Excel Command Bar */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+            <Cloud size={22} className={syncConfig?.syncStatus === 'syncing' ? 'animate-bounce' : ''} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>Live Spreadsheet Auto-Save</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </span>
+              {syncConfig?.isConnected ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span>Google Sheets Connected</span>
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  Ready to Connect Google Sheets
+                </span>
+              )}
+              {isLocalFileLinked && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                  Excel Live File Linked ({localFileName})
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Every attendance, overtime, company profile, and salary update is preserved in persistent storage and synchronized live.
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Sync & Excel Actions */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {syncConfig?.isConnected ? (
+            <button
+              onClick={syncNow}
+              disabled={syncConfig?.syncStatus === 'syncing'}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={syncConfig?.syncStatus === 'syncing' ? 'animate-spin' : ''} />
+              <span>{syncConfig?.syncStatus === 'syncing' ? 'Syncing...' : 'Sync Google Sheets'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={onOpenSaveSync}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition active:scale-95"
+            >
+              <Cloud size={14} />
+              <span>Connect Google Sheets</span>
+            </button>
+          )}
+
+          <button
+            onClick={downloadExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition active:scale-95"
+          >
+            <FileSpreadsheet size={15} />
+            <span>Download Excel (.xlsx)</span>
+          </button>
+
+          <button
+            onClick={onOpenSaveSync}
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            title="Auto-Save and Live Sync Settings"
+          >
+            <ExternalLink size={16} />
+          </button>
         </div>
       </div>
 

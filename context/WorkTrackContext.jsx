@@ -334,10 +334,10 @@ export function WorkTrackProvider({ children }) {
     showToast(`Auto-Sync turned ${enabled ? 'ON' : 'OFF'}.`);
   }, [updateSyncConfig, showToast]);
 
-  // Link Local PC File
-  const linkLocalFileHandler = useCallback(async (createMode = false) => {
+  // Link Local PC File for live continuous auto-save (.xlsx Excel or .json)
+  const linkLocalFileHandler = useCallback(async (createMode = false, type = 'xlsx') => {
     try {
-      const res = createMode ? await createAndLinkNewLocalFile() : await linkLocalBackupFile();
+      const res = createMode ? await createAndLinkNewLocalFile(type) : await linkLocalBackupFile();
       if (res.cancelled) return;
 
       setLocalFileHandle(res.fileHandle);
@@ -345,7 +345,7 @@ export function WorkTrackProvider({ children }) {
 
       // Write current data immediately
       await writeToLinkedLocalFile(res.fileHandle, data);
-      showToast(`Linked local PC file: "${res.fileName}"`);
+      showToast(`Linked live auto-save file: "${res.fileName}"`);
     } catch (err) {
       showToast(`Local File Link error: ${err.message}`, 'error');
     }

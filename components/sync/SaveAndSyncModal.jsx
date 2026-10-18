@@ -68,39 +68,226 @@ export function SaveAndSyncModal({ isOpen, onClose }) {
     }
   };
 
-  const sampleAppsScriptCode = `function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "WorkTrack Web App Active" })).setMimeType(ContentService.MimeType.JSON);
+  const sampleAppsScriptCode = `/**
+ * WORKTRACK — GOOGLE APPS SCRIPT WEB APP FOR LIVE GOOGLE SHEETS SYNC
+ */
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    message: "WorkTrack Google Sheets Web App is active and ready.",
+    timestamp: new Date().toISOString()
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
   try {
-    var payload = JSON.parse(e.postData ? e.postData.contents : "{}");
-    if (payload.action === "ping") {
-      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Connected!" })).setMimeType(ContentService.MimeType.JSON);
+    var raw = e.postData ? e.postData.contents : "{}";
+    var payload = JSON.parse(raw);
+    var action = payload.action || "full_sync";
+
+    if (action === "ping") {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: "Google Sheets Web App connected successfully!"
+      })).setMimeType(ContentService.MimeType.JSON);
     }
-    var ss = payload.spreadsheetId ? SpreadsheetApp.openById(payload.spreadsheetId) : SpreadsheetApp.getActiveSpreadsheet();
+
+    var ss;
+    if (payload.spreadsheetId && payload.spreadsheetId.trim() !== "") {
+      ss = SpreadsheetApp.openById(payload.spreadsheetId.trim());
+    } else {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    }
+
+    if (!ss) {
+      throw new Error("Could not access Google Spreadsheet. Please verify Spreadsheet ID.");
+    }
+
     var data = payload.data || {};
-    syncSheet(ss, "Companies", data.companies || [], ["ID", "Name", "Role", "Department", "Location", "Status", "JoiningDate", "LeavingDate", "Salary", "Days", "Hours", "DailyRate", "OTRate", "PaymentDay"]);
-    syncSheet(ss, "Attendance", data.attendance || [], ["ID", "Date", "Company", "DayOfWeek", "Status", "PlannedShift", "ActualShift", "CheckIn", "CheckOut", "Break", "Hours", "OTHours", "DailySalary", "OTEarnings", "TotalEarnings", "Notes"]);
-    syncSheet(ss, "Overtime", data.overtime || [], ["ID", "Date", "Company", "Hours", "OTHours", "OTRate", "Multiplier", "OTAmount", "Notes"]);
-    syncSheet(ss, "Payments", data.payments || [], ["ID", "Month", "Company", "Expected", "Received", "Due", "Status", "TxID", "Date", "Notes"]);
-    return ContentService.createTextOutput(JSON.stringify({ success: true, spreadsheetUrl: ss.getUrl(), spreadsheetName: ss.getName() })).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+
+    syncCompaniesSheet(ss, data.companies || []);
+    syncAttendanceSheet(ss, data.attendance || []);
+    syncShiftsSheet(ss, data.shifts || {});
+    syncOvertimeSheet(ss, data.overtime || []);
+    syncPaymentsSheet(ss, data.payments || []);
+    syncLogSheet(ss, action, new Date().toISOString());
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      message: "Sync completed successfully!",
+      spreadsheetUrl: ss.getUrl(),
+      spreadsheetName: ss.getName(),
+      syncedAt: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: err.toString(),
+      message: err.message
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-function syncSheet(ss, name, items, headers) {
-  var s = ss.getSheetByName(name) || ss.insertSheet(name);
-  s.clear();
-  var rows = [headers];
-  items.forEach(function(item) { rows.push(Object.values(item)); });
-  if (rows.length > 0 && rows[0].length > 0) {
-    s.getRange(1, 1, rows.length, headers.length).setValues(rows);
-    s.getRange(1, 1, 1, headers.length).setBackground("#1d4ed8").setFontColor("#ffffff").setFontWeight("bold");
-    s.setFrozenRows(1);
+function getOrCreateSheet(ss, name) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
   }
-}`;
+  return sheet;
+}
+
+function syncCompaniesSheet(ss, companies) {
+  var sheet = getOrCreateSheet(ss, "Companies");
+  sheet.clear();
+  var headers = [
+    "Company ID", "Company Name", "Job Role", "Department", "Location",
+    "Employment Status", "Joining Date", "Leaving Date", "Monthly Salary (₹)",
+    "Scheduled Days/Month", "Standard Hours/Day", "Daily Rate (₹)", "Overtime Rate (₹/hr)", "Payment Day"
+  ];
+  var rows = [headers];
+
+  companies.forEach(function(c) {
+    rows.push([
+      c.id || "",
+      c.name || "",
+      c.role || "",
+      c.department || "",
+      c.location || "",
+      c.status || "Active",
+      c.joiningDate || "",
+      c.leavingDate || "Present",
+      Number(c.monthlySalary) || 0,
+      Number(c.scheduledWorkingDays) || 26,
+      Number(c.standardWorkingHours) || 8,
+      Number(c.dailySalaryRate) || 0,
+      Number(c.overtimeRate) || 0,
+      c.salaryPaymentDate || "5"
+    ]);
+  });
+
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  formatHeaderRow(sheet, headers.length, "#1d4ed8");
+}
+
+function syncAttendanceSheet(ss, attendance) {
+  var sheet = getOrCreateSheet(ss, "Attendance");
+  sheet.clear();
+  var headers = [
+    "Record ID", "Date", "Company Name", "Day of Week", "Attendance Status",
+    "Planned Shift", "Actual Shift", "Check-In", "Check-Out", "Break (mins)",
+    "Working Hours", "Overtime Hours", "Daily Base Salary (₹)", "OT Salary (₹)", "Total Earnings (₹)", "Notes"
+  ];
+  var rows = [headers];
+
+  attendance.forEach(function(a) {
+    rows.push([
+      a.id || "",
+      a.date || "",
+      a.companyName || "",
+      a.dayOfWeek || "",
+      a.status || "Present",
+      a.plannedShift || "",
+      a.actualShift || "",
+      a.checkIn || "",
+      a.checkOut || "",
+      Number(a.breakDuration) || 0,
+      Number(a.totalWorkingHours) || 0,
+      Number(a.overtimeHours) || 0,
+      Number(a.dailySalary) || 0,
+      Number(a.overtimeEarnings) || 0,
+      Number(a.totalDailyEarnings) || 0,
+      a.notes || ""
+    ]);
+  });
+
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  formatHeaderRow(sheet, headers.length, "#059669");
+}
+
+function syncShiftsSheet(ss, shifts) {
+  var sheet = getOrCreateSheet(ss, "Shifts");
+  sheet.clear();
+  var headers = ["Shift Type", "Start Time", "End Time", "Break (mins)", "Standard Hours", "Notes"];
+  var rows = [
+    headers,
+    ["Day Shift", (shifts.dayShift && shifts.dayShift.startTime) || "09:00", (shifts.dayShift && shifts.dayShift.endTime) || "18:00", (shifts.dayShift && shifts.dayShift.breakMinutes) || 60, (shifts.dayShift && shifts.dayShift.standardHours) || 8, "Regular scheduled day"],
+    ["Night Shift (Overnight)", (shifts.nightShift && shifts.nightShift.startTime) || "20:00", (shifts.nightShift && shifts.nightShift.endTime) || "05:00", (shifts.nightShift && shifts.nightShift.breakMinutes) || 60, (shifts.nightShift && shifts.nightShift.standardHours) || 8, "Overnight shift"]
+  ];
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  formatHeaderRow(sheet, headers.length, "#4f46e5");
+}
+
+function syncOvertimeSheet(ss, overtime) {
+  var sheet = getOrCreateSheet(ss, "Overtime");
+  sheet.clear();
+  var headers = ["Overtime ID", "Date", "Company Name", "Total Day Hours", "OT Hours", "OT Rate (₹/hr)", "Multiplier", "OT Amount (₹)", "Notes"];
+  var rows = [headers];
+
+  overtime.forEach(function(o) {
+    rows.push([
+      o.id || "",
+      o.date || "",
+      o.companyName || "",
+      Number(o.workingHours) || 0,
+      Number(o.overtimeHours) || 0,
+      Number(o.overtimeRate) || 0,
+      Number(o.overtimeMultiplier) || 1,
+      Number(o.overtimeAmount) || 0,
+      o.notes || ""
+    ]);
+  });
+
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  formatHeaderRow(sheet, headers.length, "#d97706");
+}
+
+function syncPaymentsSheet(ss, payments) {
+  var sheet = getOrCreateSheet(ss, "Payments");
+  sheet.clear();
+  var headers = ["Payment ID", "Salary Month", "Company Name", "Net Expected (₹)", "Amount Received (₹)", "Pending Due (₹)", "Payment Status", "Transaction ID", "Disbursed Date", "Receipt Notes"];
+  var rows = [headers];
+
+  payments.forEach(function(p) {
+    var expected = Number(p.netExpectedSalary) || 0;
+    var received = Number(p.amountReceived) || 0;
+    var due = Math.max(0, expected - received);
+    rows.push([
+      p.id || "",
+      p.salaryMonth || "",
+      p.companyName || "",
+      expected,
+      received,
+      due,
+      p.paymentStatus || "Pending",
+      p.transactionId || "",
+      p.paymentDate || "",
+      p.notes || ""
+    ]);
+  });
+
+  sheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  formatHeaderRow(sheet, headers.length, "#2563eb");
+}
+
+function syncLogSheet(ss, action, timestamp) {
+  var sheet = getOrCreateSheet(ss, "Sync_Log");
+  var headers = ["Timestamp", "Action", "Status", "Message"];
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+    formatHeaderRow(sheet, headers.length, "#475569");
+  }
+  sheet.appendRow([timestamp, action, "Success", "Live sync executed via WorkTrack"]);
+}
+
+function formatHeaderRow(sheet, colCount, hexColor) {
+  var headerRange = sheet.getRange(1, 1, 1, colCount);
+  headerRange.setBackground(hexColor);
+  headerRange.setFontColor("#ffffff");
+  headerRange.setFontWeight("bold");
+  sheet.setFrozenRows(1);
+}
+`;
 
   const copyScriptToClipboard = () => {
     navigator.clipboard.writeText(sampleAppsScriptCode);
@@ -378,17 +565,22 @@ function syncSheet(ss, name, items, headers) {
               </div>
             </div>
 
-            {/* Local PC File Linking (File System Access API) */}
+            {/* Local PC File Linking (File System Access API for Live Excel and JSON auto-save) */}
             <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/40 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <HardDrive size={18} className="text-slate-500" />
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                    <FileSpreadsheet size={18} />
+                  </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                      Link Local PC Backup File (Optional)
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>Live Excel (.xlsx) Auto-Save on Your PC</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                        Direct File Writing
+                      </span>
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Auto-updates a local JSON file directly on your computer via File System Access API
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Links an Excel workbook (.xlsx) directly on your computer so every attendance, company, and salary edit is automatically written live to your file.
                     </p>
                   </div>
                 </div>
@@ -398,14 +590,14 @@ function syncSheet(ss, name, items, headers) {
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                   {isLocalFileLinked ? (
                     <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                      <CheckCircle2 size={15} />
-                      <span>Linked: {localFileName}</span>
+                      <CheckCircle2 size={16} />
+                      <span>Live Linked: {localFileName}</span>
                     </div>
                   ) : (
-                    <span className="text-xs text-slate-400">No local file currently linked</span>
+                    <span className="text-xs text-slate-400">No local Excel file currently linked</span>
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {isLocalFileLinked ? (
                       <button
                         onClick={unlinkLocalBackupFile}
@@ -420,13 +612,14 @@ function syncSheet(ss, name, items, headers) {
                           onClick={() => linkLocalBackupFile(false)}
                           className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition"
                         >
-                          Select Existing JSON File
+                          Select Existing (.xlsx / .json)
                         </button>
                         <button
-                          onClick={() => linkLocalBackupFile(true)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 transition"
+                          onClick={() => linkLocalBackupFile(true, 'xlsx')}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition active:scale-95"
                         >
-                          + Create New Linked File
+                          <FileSpreadsheet size={14} />
+                          <span>+ Create Live Auto-Save Excel (.xlsx)</span>
                         </button>
                       </>
                     )}
@@ -434,7 +627,7 @@ function syncSheet(ss, name, items, headers) {
                 </div>
               ) : (
                 <p className="text-xs text-slate-400 italic">
-                  File System Access API is not supported in this browser. Please use the "Download Backup" button.
+                  File System Access API is not supported in this browser. Please use the 1-Click "Download Excel (.xlsx)" button.
                 </p>
               )}
             </div>
