@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { WorkTrackSidebar } from './WorkTrackSidebar';
-import { WorkTrackNavbar } from './WorkTrackNavbar';
-import { WorkTrackMobileNav } from './WorkTrackMobileNav';
-import { CompanyModal } from '../company/CompanyModal';
-import { AttendanceModal } from '../attendance/AttendanceModal';
-import { OvertimeModal } from '../overtime/OvertimeModal';
-import { SaveAndSyncModal } from '../sync/SaveAndSyncModal';
-import { WorkTrackToasts } from '../common/WorkTrackToasts';
+import { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { AttendanceModal } from "../attendance/AttendanceModal";
+import { WorkTrackToasts } from "../common/WorkTrackToasts";
+import { CompanyModal } from "../company/CompanyModal";
+import { OvertimeModal } from "../overtime/OvertimeModal";
+import { WorkTrackMobileNav } from "./WorkTrackMobileNav";
+import { WorkTrackNavbar } from "./WorkTrackNavbar";
+import { WorkTrackSidebar } from "./WorkTrackSidebar";
 
 export function WorkTrackLayout({ onBackToStudy }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -17,8 +16,6 @@ export function WorkTrackLayout({ onBackToStudy }) {
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
   const [isAddOvertimeOpen, setIsAddOvertimeOpen] = useState(false);
-  const [isSaveSyncOpen, setIsSaveSyncOpen] = useState(false);
-
 
   const navigate = useNavigate();
 
@@ -26,7 +23,7 @@ export function WorkTrackLayout({ onBackToStudy }) {
     if (onBackToStudy) {
       onBackToStudy();
     } else {
-      navigate('/');
+      navigate("/");
     }
   };
 
@@ -54,7 +51,6 @@ export function WorkTrackLayout({ onBackToStudy }) {
           onOpenAddCompany={() => setIsAddCompanyOpen(true)}
           onOpenMarkAttendance={() => setIsMarkAttendanceOpen(true)}
           onOpenAddOvertime={() => setIsAddOvertimeOpen(true)}
-          onOpenSaveSync={() => setIsSaveSyncOpen(true)}
           onBackToStudy={handleBackToStudy}
         />
 
@@ -66,7 +62,6 @@ export function WorkTrackLayout({ onBackToStudy }) {
                 onOpenAddCompany: () => setIsAddCompanyOpen(true),
                 onOpenMarkAttendance: () => setIsMarkAttendanceOpen(true),
                 onOpenAddOvertime: () => setIsAddOvertimeOpen(true),
-                onOpenSaveSync: () => setIsSaveSyncOpen(true),
               }}
             />
           </div>
@@ -89,14 +84,8 @@ export function WorkTrackLayout({ onBackToStudy }) {
         onClose={() => setIsAddOvertimeOpen(false)}
       />
 
-      <SaveAndSyncModal
-        isOpen={isSaveSyncOpen}
-        onClose={() => setIsSaveSyncOpen(false)}
-      />
-
       {/* Floating Notifications */}
       <WorkTrackToasts />
     </div>
   );
 }
-
