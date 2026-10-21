@@ -4,7 +4,6 @@ import {
   Calendar,
   Clock,
   Home,
-  LogOut,
   Menu,
   Moon,
   Plus,
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useWorkTrack } from "../../context/WorkTrackContext";
 
@@ -24,21 +22,9 @@ export function WorkTrackNavbar({
   onBackToStudy,
 }) {
   const navigate = useNavigate();
-  const { signOutUser } = useAuth();
   const { companies, activeCompanyId, setActiveCompanyId } = useWorkTrack();
   const { theme, toggleTheme } = useTheme();
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOutUser();
-      navigate("/login", { replace: true });
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
 
   return (
     <header className="h-16 relative border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-20 shadow-xs">
@@ -146,16 +132,6 @@ export function WorkTrackNavbar({
           title={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
         >
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        <button
-          onClick={handleSignOut}
-          disabled={isSigningOut}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800"
-          aria-label="Sign out"
-          title="Sign out"
-        >
-          <LogOut size={17} />
         </button>
 
         {/* Home / StudyFlow Return Buttons */}
